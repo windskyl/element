@@ -17,7 +17,7 @@ import (
 func CreateArticle(c *gin.Context) {
 	var req models.ArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求", "reason": "Invalid request body"})
 		return
 	}
 
@@ -32,7 +32,7 @@ func CreateArticle(c *gin.Context) {
 
 	collection := db.GetCollection("articles")
 	if _, err := collection.InsertOne(c, article); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建文章失败", "reason": "Failed to create article"})
 		return
 	}
 
@@ -45,7 +45,7 @@ func UpdateArticle(c *gin.Context) {
 
 	var req models.ArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求", "reason": "Invalid request body"})
 		return
 	}
 
@@ -62,12 +62,12 @@ func UpdateArticle(c *gin.Context) {
 	collection := db.GetCollection("articles")
 	result, err := collection.UpdateOne(c, filter, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新文章失败", "reason": "Failed to update article"})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或无权修改"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或无权修改", "reason": "Article not found or no permission"})
 		return
 	}
 
@@ -86,12 +86,12 @@ func DeleteArticle(c *gin.Context) {
 	collection := db.GetCollection("articles")
 	result, err := collection.DeleteOne(c, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败", "reason": "Failed to delete article"})
 		return
 	}
 
 	if result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或无权删除"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或无权删除", "reason": "Article not found or no permission"})
 		return
 	}
 

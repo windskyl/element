@@ -19,12 +19,12 @@ func CreateComment(c *gin.Context) {
 
 	var req models.CommentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效请求", "reason": "Invalid request body"})
 		return
 	}
 
 	if req.ArticleID != articleID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "文章ID不匹配"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "文章ID不匹配", "reason": "Article ID mismatch"})
 		return
 	}
 
@@ -39,7 +39,7 @@ func CreateComment(c *gin.Context) {
 
 	collection := db.GetCollection("comments")
 	if _, err := collection.InsertOne(c, comment); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建评论失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建评论失败", "reason": "Failed to create comment"})
 		return
 	}
 
@@ -69,14 +69,14 @@ func GetComments(c *gin.Context) {
 	collection := db.GetCollection("comments")
 	cursor, err := collection.Find(c, filter, findOptions)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败", "reason": "Failed to get comments"})
 		return
 	}
 	defer cursor.Close(context.Background())
 
 	var comments []models.Comment
 	if err := cursor.All(c, &comments); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "解析评论失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "解析评论失败", "reason": "Failed to parse comments"})
 		return
 	}
 
