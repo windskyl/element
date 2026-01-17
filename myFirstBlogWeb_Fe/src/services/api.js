@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useUserStore } from '@/store/user.js'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   timeout: 10000
 })
 
@@ -34,6 +34,11 @@ export default {
     return api.post('/captcha')
   },
 
+  // 验证图片验证码
+  verifyCaptcha(payload) {
+    return api.post('/captcha/verify', payload)
+  },
+
   // 用户注册
   register(data) {
     return api.post('/register', data)
@@ -51,12 +56,19 @@ export default {
 
   // 获取文章列表
   getArticles(page = 1, limit = 10) {
-    return api.get(`/ctx/articles?page=${page}&limit=${limit}`)
+    // 列表为公开接口，不需要 token
+    return api.get(`/articles?page=${page}&limit=${limit}`)
+  },
+
+  // 获取当前登录用户的文章数量
+  getMyArticlesCount() {
+    return api.get('/ctx/user/articles-count')
   },
 
   // 获取文章详情
   getArticle(id) {
-    return api.get(`/ctx/articles/${id}`)
+    // 文章详情为公开接口（后端路由为 GET /articles/:id）
+    return api.get(`/articles/${id}`)
   },
 
   // 更新文章
@@ -72,6 +84,16 @@ export default {
   // 获取评论列表
   getComments(articleId, page = 1, limit = 10) {
     return api.get(`/ctx/comments/${articleId}?page=${page}&limit=${limit}`)
+  },
+
+  // 上传图片（multipart/form-data）
+  uploadImage(formData) {
+    return api.post('/ctx/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+
+  // 删除上传的图片
+  deleteImage(filename) {
+    return api.delete(`/ctx/images/${filename}`)
   },
 
   // 发表评论（POST /ctx/comments/{articleId}）

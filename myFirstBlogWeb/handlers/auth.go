@@ -26,7 +26,8 @@ func Login(c *gin.Context) {
 	}
 	fmt.Printf("Login payload: %+v\n", req)
 
-	if !VerifyCaptchaFunc(req.CaptchaID, req.Captcha) {
+	// 使用不消耗验证码的校验，避免用户先验证图片然后因为用户名/密码错误导致验证码被意外消费
+	if !utils.CheckCaptcha(req.CaptchaID, req.Captcha) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "验证码错误", "reason": "验证码不正确"})
 		return
 	}
@@ -36,14 +37,21 @@ func Login(c *gin.Context) {
 	filter := bson.M{"username": req.Username}
 	err := collection.FindOne(c, filter).Decode(&user)
 	if err != nil {
+		fmt.Printf("Login user lookup error: %v\n", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在", "reason": "数据库无此用户"})
 		return
 	}
 
 	// 比较服务端存储的密码哈希（加盐）和客户端发送的密码哈希
 	if user.PasswordHash != req.PasswordHash {
+		fmt.Printf("Login password mismatch: stored='%s' provided='%s'\n", user.PasswordHash, req.PasswordHash)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "密码错误", "reason": "密码哈希不匹配"})
 		return
+	}
+
+	// 登录成功后再消费验证码，确保用户验证与登录动作一致
+	if ok := utils.VerifyCaptcha(req.CaptchaID, req.Captcha); !ok {
+		fmt.Printf("Warning: VerifyCaptcha failed when consuming after successful login for id='%s' answer='%s'\n", req.CaptchaID, req.Captcha)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -74,8 +82,8 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 使用可注入的校验函数
-	if !VerifyCaptchaFunc(req.CaptchaID, req.Captcha) {
+	// 使用可注入的校验函数（注册时也先做非消费校验）
+	if !utils.CheckCaptcha(req.CaptchaID, req.Captcha) {
 		fmt.Printf("captcha error\n")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "验证码错误", "reason": "验证码不正确"})
 		return

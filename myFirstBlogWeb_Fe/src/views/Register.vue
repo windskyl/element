@@ -23,10 +23,6 @@ const registerError = ref('')
 
 const register = async (userData) => {
   registerError.value = ''
-  // if (userData.password !== userData.confirmPassword) {
-  //   registerError.value = '两次输入的密码不一致'
-  //   return
-  // }
   const success = await userStore.register(userData)
   if (success) {
     router.push({ name: 'home' })

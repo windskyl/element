@@ -3,23 +3,19 @@ import { useUserStore } from '@/store/user.js'
 
 // 使用动态导入组件
 const Home = () => import('@/views/Home.vue')
-const About = () => import('@/views/About.vue')
+// About page removed
 const Login = () => import('@/views/Login.vue')
 const Register = () => import('@/views/Register.vue')
 const CreateArticle = () => import('@/views/CreateArticle.vue')
 const ArticleDetail = () => import('@/views/ArticleDetail.vue')
 const EditArticle = () => import('@/views/EditArticle.vue')
+const UserInfo = () => import('@/views/UserInfo.vue')
 
 const routes = [
   {
     path: '/',
     name: 'home',
     component: Home
-  },
-  {
-    path: '/about',
-    name: 'about',
-    component: About
   },
   {
     path: '/login',
@@ -50,6 +46,12 @@ const routes = [
     name: 'edit-article',
     component: EditArticle,
     props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/user',
+    name: 'user-info',
+    component: UserInfo,
     meta: { requiresAuth: true }
   },
   {

@@ -82,8 +82,28 @@ func GetComments(c *gin.Context) {
 
 	total, _ := collection.CountDocuments(c, filter)
 
+	// 为每条评论附加 author_username
+	usersColl := db.GetCollection("users")
+	var outComments []gin.H
+	for _, cm := range comments {
+		authorName := ""
+		var user models.User
+		if err := usersColl.FindOne(c, bson.M{"user_id": cm.AuthorID}).Decode(&user); err == nil {
+			authorName = user.Username
+		}
+		outComments = append(outComments, gin.H{
+			"comment_id":      cm.CommentID,
+			"content":         cm.Content,
+			"author_id":       cm.AuthorID,
+			"author_username": authorName,
+			"article_id":      cm.ArticleID,
+			"create_time":     cm.CreateTime,
+			"modify_time":     cm.ModifyTime,
+		})
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"comments": comments,
+		"comments": outComments,
 		"total":    total,
 		"page":     page,
 		"limit":    limit,

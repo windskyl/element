@@ -11,17 +11,51 @@ export const useUserStore = defineStore('user', () => {
   // 顶层不再声明 router
   
   const isLoggedIn = ref(!!token.value)
+  const articlesCount = ref(0)
   
   const setUser = (userData) => {
     token.value = userData.token || ''
     userId.value = userData.userID || ''
     username.value = userData.username || ''
+    // keep articlesCount in sync if provided
+    if (typeof userData.articlesCount !== 'undefined') {
+      articlesCount.value = userData.articlesCount
+    }
     
     localStorage.setItem('token', token.value)
     localStorage.setItem('userId', userId.value)
     localStorage.setItem('username', username.value)
     
     isLoggedIn.value = !!token.value
+  }
+
+  const refreshArticlesCount = async () => {
+    if (!token.value) {
+      articlesCount.value = 0
+      return
+    }
+    try {
+      const res = await api.getMyArticlesCount()
+      articlesCount.value = res.data.count || 0
+    } catch (err) {
+      console.error('refreshArticlesCount error', err)
+      articlesCount.value = 0
+    }
+  }
+
+  // 检查 token 的有效期（基于 JWT exp 字段），避免使用已过期的 token 发起受保护请求
+  const isTokenValid = () => {
+    if (!token.value) return false
+    try {
+      const parts = token.value.split('.')
+      if (parts.length < 2) return false
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+      if (!payload.exp) return true
+      return payload.exp > Math.floor(Date.now() / 1000)
+    } catch (err) {
+      console.error('isTokenValid parse error', err)
+      return false
+    }
   }
   
   const clearUser = () => {
@@ -39,16 +73,18 @@ export const useUserStore = defineStore('user', () => {
     const login = async (credentials) => {
       try {
         const payload = {
-          Username: credentials.username,
-          PasswordHash: md5(credentials.password),
-          Captcha: credentials.captcha,
-          CaptchaID: credentials.captcha_id
+          username: credentials.username,
+          password_hash: md5(credentials.password),
+          captcha: credentials.captcha,
+          captcha_id: credentials.captcha_id
         }
         console.log('login payload:', payload)
         const res = await api.login(payload)
         console.log('login response:', res)
         if (res.data.token) {
           setUser(res.data)
+          // refresh the user's article count after login
+          await refreshArticlesCount()
           return true
         } else {
           return false
@@ -62,16 +98,18 @@ export const useUserStore = defineStore('user', () => {
   const register = async (userData) => {
     try {
       const payload = {
-        Username: userData.username,
-        PasswordHash: md5(userData.password),
-        Captcha: userData.captcha,
-        CaptchaID: userData.captcha_id
+        username: userData.username,
+        password_hash: md5(userData.password),
+        captcha: userData.captcha,
+        captcha_id: userData.captcha_id
       }
       console.log('register payload:', payload)
       const res = await api.register(payload)
       console.log('register response:', res)
       if (res.data.userID) {
         setUser({ ...userData, userID: res.data.userID, token: '' })
+        // after registering, count is zero
+        articlesCount.value = 0
         return true
       } else {
         return false
@@ -92,10 +130,13 @@ export const useUserStore = defineStore('user', () => {
     userId,
     username,
     isLoggedIn,
+    articlesCount,
     setUser,
     clearUser,
     login,
     register,
-    logout
+    logout,
+    refreshArticlesCount,
+    isTokenValid
   }
 })

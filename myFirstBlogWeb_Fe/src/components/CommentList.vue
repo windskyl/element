@@ -3,7 +3,7 @@
     <div class="comment" v-for="comment in comments" :key="comment.comment_id">
       <div class="comment-content">{{ comment.content }}</div>
       <div class="comment-meta">
-        <span>作者: {{ comment.author_id }}</span>
+        <span class="comment-author">{{ comment.author_username || '匿名' }}</span>
         <span>{{ formatDate(comment.create_time) }}</span>
       </div>
     </div>

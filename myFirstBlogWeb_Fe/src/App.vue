@@ -9,16 +9,18 @@
         <router-link :to="{ name: 'home' }" class="nav-btn" active-class="active">
           <i class="fas fa-home"></i> 首页
         </router-link>
+        <!-- 圆形突出写文章按钮 -->
         <router-link 
           v-if="isLoggedIn" 
           :to="{ name: 'create-article' }" 
-          class="nav-btn" 
-          active-class="active"
+          class="fab" 
+          aria-label="写文章"
         >
-          <i class="fas fa-plus"></i> 写文章
+          <span class="fab-plus">+</span>
         </router-link>
-        <router-link :to="{ name: 'about' }" class="nav-btn" active-class="active">
-          <i class="fas fa-info-circle"></i> 关于
+        <!-- 用户信息页面入口 -->
+        <router-link v-if="isLoggedIn" :to="{ name: 'user-info' }" class="nav-btn" active-class="active">
+          <i class="fas fa-user-circle"></i> 用户信息
         </router-link>
       </nav>
       <div class="user-info" v-if="isLoggedIn">
@@ -39,39 +41,12 @@
       </div>
     </header>
     
-    <main>
+    <main class="main-with-sidebar">
+      <aside class="sidebar left">
+        <!-- 左侧侧边栏占位，可用于后续扩展 -->
+      </aside>
       <div class="content-area">
         <router-view></router-view>
-      </div>
-      
-      <div class="sidebar">
-        <h2><i class="fas fa-user"></i> 用户信息</h2>
-        <div v-if="isLoggedIn" class="card">
-          <div class="card-title">{{ username }}</div>
-          <div class="card-content">
-            <p>用户ID: {{ userId }}</p>
-            <p>已发表文章: {{ userArticlesCount }} 篇</p>
-          </div>
-        </div>
-        <div v-else class="empty-state">
-          <i class="fas fa-user"></i>
-          <p>请登录查看用户信息</p>
-        </div>
-        
-        <h2 style="margin-top: 30px;"><i class="fas fa-fire"></i> 热门文章</h2>
-        <div v-if="popularArticles.length > 0">
-          <div class="card" v-for="article in popularArticles" :key="article.article_id">
-            <div class="card-title">{{ article.title }}</div>
-            <div class="card-meta">
-              <span>{{ article.commentCount }} 评论</span>
-              <span>{{ formatDate(article.create_time) }}</span>
-            </div>
-          </div>
-        </div>
-        <div v-else class="empty-state">
-          <i class="fas fa-file-alt"></i>
-          <p>暂无热门文章</p>
-        </div>
       </div>
     </main>
   </div>
@@ -89,8 +64,8 @@ export default {
     const userStore = useUserStore()
     const router = useRouter()
     
-    const popularArticles = ref([])
-    const userArticlesCount = ref(5)
+  // const popularArticles = ref([]) // 已移除热门文章功能
+  const userArticlesCount = computed(() => userStore.articlesCount)
     
     const isLoggedIn = computed(() => userStore.isLoggedIn)
     const username = computed(() => userStore.username)
@@ -100,47 +75,56 @@ export default {
       userStore.logout()
     }
     
-    const loadPopularArticles = () => {
-      // 模拟热门文章数据
-      popularArticles.value = [
-        {
-          article_id: 'pop-1',
-          title: 'Vue 3 新特性解析',
-          create_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          commentCount: 15
-        },
-        {
-          article_id: 'pop-2',
-          title: 'Pinia 状态管理实践',
-          create_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          commentCount: 8
-        },
-        {
-          article_id: 'pop-3',
-          title: '前端工程化最佳实践',
-          create_time: new Date().toISOString(),
-          commentCount: 12
-        }
-      ]
-    }
+    // hot articles removed
     
-    onMounted(() => {
-      loadPopularArticles()
+    onMounted(async () => {
+      if (userStore.isLoggedIn && userStore.isTokenValid && userStore.isTokenValid()) {
+        await userStore.refreshArticlesCount()
+      }
     })
     
     return {
       isLoggedIn,
       username,
       userId,
-      popularArticles,
       userArticlesCount,
       logout,
-      formatDate
+      formatDate,
+      // kept minimal
     }
   }
 }
 </script>
 
 <style scoped>
-/* 这里不再重复，使用公共的style.css */
+/* Top FAB and left sidebar styles */
+.main-with-sidebar{
+  display:flex;
+  gap:20px;
+}
+.sidebar.left{
+  width:220px;
+  flex: 0 0 220px;
+}
+.content-area{
+  flex:1 1 auto;
+}
+.fab{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  background: #2f8fef;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(47,143,239,0.25);
+  text-decoration: none;
+  margin: 0 8px;
+}
+.fab:hover{ transform: translateY(-2px); }
+.fab-plus{ font-size: 22px; line-height:1; font-weight:700; }
+
+/* tweak nav button spacing */
+.nav-btn{ margin-right:10px }
 </style>
