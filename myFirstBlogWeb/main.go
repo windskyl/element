@@ -41,25 +41,44 @@ func main() {
 	// 图片验证码路由
 	r.POST("/captcha", func(c *gin.Context) {
 		id, b64 := utils.GenerateCaptcha()
-		c.JSON(200, gin.H{"id": id, "image": b64})
+		// 返回兼容字段名，前端多个地方可能期待不同字段名
+		c.JSON(200, gin.H{"captcha_id": id, "image_base64": b64, "id": id, "image": b64})
 	})
+	// 验证验证码（前端可直接调用以判断输入是否匹配）
+	r.POST("/captcha/verify", handlers.VerifyCaptchaHandler)
+
+	// 静态文件：公开上传的图片
+	r.Static("/uploads", "public/uploads")
 
 	// 注册路由
 	r.POST("/login", handlers.Login)       // 用户登录
 	r.POST("/register", handlers.Register) // 用户注册
 
+	// 临时调试路由 - 返回 articles 集合计数，便于前端快速验证 DB 状态
+	r.GET("/debug/articles-count", handlers.DebugArticlesCount)
+
 	authGroup := r.Group("/ctx")
 	authGroup.Use(middleware.AuthMiddleware())
 	{
-		authGroup.POST("/articles", handlers.CreateArticle)            // 创建文章
-		authGroup.PUT("/articles/:id", handlers.UpdateArticle)         // 更新文章
-		authGroup.DELETE("/articles/:id", handlers.DeleteArticle)      // 删除文章
-		authGroup.GET("/articles", handlers.GetArticles)               // 获取文章列表
-		authGroup.POST("/comments/:articleId", handlers.CreateComment) // 创建评论
-		authGroup.GET("/comments/:articleId", handlers.GetComments)    // 获取文章评论
+		authGroup.POST("/articles", handlers.CreateArticle)                // 创建文章
+		authGroup.PUT("/articles/:id", handlers.UpdateArticle)             // 更新文章
+		authGroup.DELETE("/articles/:id", handlers.DeleteArticle)          // 删除文章
+		authGroup.GET("/articles", handlers.GetArticles)                   // 获取文章列表
+		authGroup.GET("/user/articles-count", handlers.GetMyArticlesCount) // 获取当前用户文章计数
+		authGroup.POST("/comments/:articleId", handlers.CreateComment)     // 创建评论
+		authGroup.GET("/comments/:articleId", handlers.GetComments)        // 获取文章评论
+		// 上传/删除图片（登录用户）
+		authGroup.POST("/upload", handlers.UploadImage)
+		authGroup.DELETE("/images/:name", handlers.DeleteImage)
+		// 单个文章详情（公开访问）
 	}
 
-	// 启动服务
-	log.Println("服务运行在 :8080")
-	r.Run(":8080")
+	// 公开文章详情路由
+	r.GET("/articles/:id", handlers.GetArticle)
+	// 公开文章列表（无需登录）
+	r.GET("/articles", handlers.GetArticles)
+
+	// 启动服务（改用 3000 以避开系统保留端口）
+	log.Println("服务运行在 :3000")
+	r.Run(":3000")
 }

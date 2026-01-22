@@ -22,7 +22,7 @@
 
 ### 1.1 用户注册
 
-- **接口**：`POST /api/register`
+- **接口**：`POST /register`
 - **请求体（JSON）**：
 
   ```json
@@ -57,7 +57,7 @@
 
 ### 1.2 用户登录
 
-- **接口**：`POST /api/login`
+- **接口**：`POST /login`
 - **请求体（JSON）**：
 
   ```json
@@ -93,7 +93,7 @@
 
 ### 1.3 获取验证码
 
-- **接口**：`GET /api/captcha`
+- **接口**：`POST /captcha`
 - **响应**：
 
   ```json
@@ -109,7 +109,7 @@
 
 ### 2.1 创建文章
 
-- **接口**：`POST /api/articles`
+- **接口**：`POST /ctx/articles`
 - **请求头**：`Authorization: Bearer <token>`
 - **请求体（JSON）**：
 
@@ -147,7 +147,7 @@
 
 ### 2.2 获取文章列表
 
-- **接口**：`GET /api/articles?page=1&limit=10`
+- **接口**：`GET /ctx/articles?page=1&limit=10`
 - **响应**：
 
   ```json
@@ -172,7 +172,7 @@
 
 ### 2.3 修改文章
 
-- **接口**：`PUT /api/articles/{id}`
+- **接口**：`PUT /ctx/articles/{id}`
 - **请求头**：`Authorization: Bearer <token>`
 - **请求体（JSON）**：
 
@@ -199,7 +199,7 @@
 
 ### 2.4 删除文章
 
-- **接口**：`DELETE /api/articles/{id}`
+- **接口**：`DELETE /ctx/articles/{id}`
 - **请求头**：`Authorization: Bearer <token>`
 - **响应**：
 
@@ -219,7 +219,7 @@
 
 ### 3.1 获取评论列表
 
-- **接口**：`GET /api/comments/{articleId}?page=1&limit=10`
+- **接口**：`GET /ctx/comments/{articleId}?page=1&limit=10`
 - **响应**：
 
   ```json
@@ -244,7 +244,7 @@
 
 ### 3.2 发表评论
 
-- **接口**：`POST /api/comments`
+- **接口**：`POST /ctx/comments/{articleId}`
 - **请求头**：`Authorization: Bearer <token>`
 - **请求体（JSON）**：
 
